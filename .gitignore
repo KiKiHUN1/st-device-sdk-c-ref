@@ -7,3 +7,4 @@ STDKkdoae9Myz3tJ.png
 tools/common/generateqr.py
 tools/common/__pycache__/generate_output.cpython-312.pyc
 apps/esp32/switch_example/dependencies.lock
+bsp/esp32
