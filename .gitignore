@@ -1,1 +1,9 @@
 /output/
+apps/esp32/switch_example/main/device_info.json
+apps/esp32/switch_example/main/onboarding_config.json
+apps/esp32/switch_example/build
+apps/esp32/switch_example/managed_components
+STDKkdoae9Myz3tJ.png
+tools/common/generateqr.py
+tools/common/__pycache__/generate_output.cpython-312.pyc
+apps/esp32/switch_example/dependencies.lock

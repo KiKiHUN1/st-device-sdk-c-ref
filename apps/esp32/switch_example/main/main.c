@@ -50,34 +50,35 @@ static int noti_led_mode = LED_ANIMATION_MODE_IDLE;
 
 static caps_switch_data_t *cap_switch_data;
 
-static int get_switch_state(void)
+static int get_online_switch_state(void)
 {
     const char* switch_value = cap_switch_data->get_switch_value(cap_switch_data);
-    int switch_state = SWITCH_OFF;
+    int switch_state = LED_SWITCH_OFF;
 
     if (!switch_value) {
         return -1;
     }
 
     if (!strcmp(switch_value, caps_helper_switch.attr_switch.value_on)) {
-        switch_state = SWITCH_ON;
+        switch_state = LED_SWITCH_ON;
     } else if (!strcmp(switch_value, caps_helper_switch.attr_switch.value_off)) {
-        switch_state = SWITCH_OFF;
+        switch_state = LED_SWITCH_OFF;
     }
     return switch_state;
 }
 
 static void cap_switch_cmd_cb(struct caps_switch_data *caps_data)
 {
-    int switch_state = get_switch_state();
-    change_switch_state(switch_state);
+    int switch_state = get_online_switch_state();
+    change_led_switch_state(switch_state);
+    change_relay_switch_state(switch_state);
 }
 
 static void capability_init()
 {
     cap_switch_data = caps_switch_initialize(iot_ctx, "main", NULL, NULL);
     if (cap_switch_data) {
-        const char *switch_init_value = caps_helper_switch.attr_switch.value_on;
+        const char *switch_init_value = caps_helper_switch.attr_switch.value_off;
 
         cap_switch_data->cmd_on_usr_cb = cap_switch_cmd_cb;
         cap_switch_data->cmd_off_usr_cb = cap_switch_cmd_cb;
@@ -93,21 +94,63 @@ static void iot_status_cb(iot_status_t status,
     g_iot_stat_lv = stat_lv;
 
     printf("status: %d, stat: %d\n", g_iot_status, g_iot_stat_lv);
-
     switch(status)
     {
-        case IOT_STATUS_NEED_INTERACT:
-            noti_led_mode = LED_ANIMATION_MODE_FAST;
-            break;
         case IOT_STATUS_IDLE:
-        case IOT_STATUS_CONNECTING:
+            printf("Connetion timeout. Unplug to restart setup.");
             noti_led_mode = LED_ANIMATION_MODE_IDLE;
-            change_switch_state(get_switch_state());
+            change_led_mode(noti_led_mode);
+            int switch_state = get_online_switch_state();
+            change_led_switch_state(switch_state);
+            break;
+        case IOT_STATUS_NEED_INTERACT:
+            printf("software error. Either unplug and replug or rest the device.");
+            noti_led_mode = LED_ANIMATION_MODE_FAST;
+            change_led_mode(noti_led_mode);
+            break;
+        case IOT_STATUS_PROVISIONING:
+            if(stat_lv==IOT_STAT_LV_CONN)
+            {
+                printf("connecting to samsung device....");
+                noti_led_mode = LED_ANIMATION_MODE_SLOW;
+            }else if(stat_lv==IOT_STAT_LV_DONE)
+            {
+                printf("connected to samsung device.");
+                noti_led_mode = LED_ANIMATION_MODE_SLOW;
+            }else
+            {
+                printf("waiting for a samsung device to setup this device");
+                noti_led_mode = LED_ANIMATION_MODE_FAST;
+            }
+           change_led_mode(noti_led_mode);
+            break;
+        case IOT_STATUS_CONNECTING:
+            printf("connecting to cloud....");
+            noti_led_mode = LED_ANIMATION_MODE_SLOW;
+            change_led_mode(noti_led_mode);
+            if(stat_lv==IOT_STAT_LV_FAIL)
+            {
+                printf("connection failed");
+                noti_led_mode = LED_ANIMATION_MODE_FAST;
+                change_led_mode(noti_led_mode);
+            }else if(stat_lv==IOT_STAT_LV_DONE)
+            {
+                printf("connected");
+                noti_led_mode = LED_ANIMATION_MODE_IDLE;
+                change_led_mode(noti_led_mode);
+                int switch_state = get_online_switch_state();
+                change_led_switch_state(switch_state);
+                change_relay_switch_state(switch_state);
+            }
+                
+          
             break;
         default:
             break;
     }
 }
+
+
 
 #if defined(SET_PIN_NUMBER_CONFRIM)
 void* pin_num_memcpy(void *dest, const void *src, unsigned int count)
@@ -171,32 +214,34 @@ void button_event(IOT_CAP_HANDLE *handle, int type, int count)
                 if (g_iot_status == IOT_STATUS_NEED_INTERACT) {
                     st_conn_ownership_confirm(iot_ctx, true);
                     noti_led_mode = LED_ANIMATION_MODE_IDLE;
-                    change_switch_state(get_switch_state());
+                    change_led_switch_state(get_online_switch_state());
                 } else {
-                    if (get_switch_state() == SWITCH_ON) {
-                        change_switch_state(SWITCH_OFF);
+                    if (get_online_switch_state() == LED_SWITCH_ON) {
+                        change_led_switch_state(LED_SWITCH_OFF);
+                        change_relay_switch_state(RELAY_SWITCH_OFF);
                         cap_switch_data->set_switch_value(cap_switch_data, caps_helper_switch.attr_switch.value_off);
                         cap_switch_data->attr_switch_send(cap_switch_data);
                     } else {
-                        change_switch_state(SWITCH_ON);
+                        change_led_switch_state(LED_SWITCH_ON);
+                        change_relay_switch_state(RELAY_SWITCH_ON);
                         cap_switch_data->set_switch_value(cap_switch_data, caps_helper_switch.attr_switch.value_on);
                         cap_switch_data->attr_switch_send(cap_switch_data);
                     }
                 }
                 break;
-            case 5:
+            //case 5:
                 /* clean-up provisioning & registered data with reboot option*/
                 st_conn_cleanup(iot_ctx, true);
 
-                break;
-            default:
-                led_blink(get_switch_state(), 100, count);
-                break;
+                //break;
+            /*default:
+                led_blink(get_online_switch_state(), 100, count);
+                break;*/
         }
     } else if (type == BUTTON_LONG_PRESS) {
         printf("Button long press, iot_status: %d\n", g_iot_status);
-        led_blink(get_switch_state(), 100, 3);
-        st_conn_cleanup(iot_ctx, false);
+        led_blink(get_online_switch_state(), 100, 3);
+        st_conn_cleanup(iot_ctx, true);
         xTaskCreate(connection_start_task, "connection_task", 2048, NULL, 10, NULL);
     }
 }

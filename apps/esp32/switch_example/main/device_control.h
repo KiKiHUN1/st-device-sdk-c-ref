@@ -25,6 +25,7 @@
 #define GPIO_OUTPUT_MAINLED 16
 #define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
 
+
 #define GPIO_OUTPUT_NOUSE1 17
 #define GPIO_OUTPUT_NOUSE2 25
 #else // ESP32_DEVKITC_V4
@@ -32,21 +33,29 @@
 #define GPIO_INPUT_BUTTON 0
 
 #define GPIO_OUTPUT_MAINLED 12
-#define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
 
-#define GPIO_OUTPUT_NOUSE1 14
-#define GPIO_OUTPUT_NOUSE2 27
+#define GPIO_OUTPUT_RELAY 14
 
 #endif
 
-enum switch_onoff_state {
-    SWITCH_OFF = 0,
-    SWITCH_ON = 1,
+enum switch_led_onoff_state {
+    LED_SWITCH_OFF = 0,
+    LED_SWITCH_ON = 1,
+};
+
+enum switch_relay_onoff_state {
+    RELAY_SWITCH_OFF = 0,
+    RELAY_SWITCH_ON = 1,
 };
 
 enum main_led_gpio_state {
     MAINLED_GPIO_ON = 1,
     MAINLED_GPIO_OFF = 0,
+};
+
+enum main_relay_gpio_state {
+    MAINRELAY_GPIO_ON = 1,
+    MAINRELAY_GPIO_OFF = 0,
 };
 
 enum led_animation_mode_list {
@@ -69,7 +78,8 @@ enum button_event_type {
     BUTTON_SHORT_PRESS = 1,
 };
 
-void change_switch_state(int switch_state);
+void change_led_switch_state(int switch_state);
+void change_relay_switch_state(int switch_state);
 void button_isr_handler(void *arg);
 int get_button_event(int* button_event_type, int* button_event_count);
 void led_blink(int switch_state, int delay, int count);

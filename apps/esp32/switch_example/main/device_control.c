@@ -24,12 +24,21 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 
-void change_switch_state(int switch_state)
+void change_led_switch_state(int switch_state)
 {
-    if (switch_state == SWITCH_OFF) {
+    if (switch_state == LED_SWITCH_OFF) {
         gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_OFF);
     } else {
         gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
+    }
+}
+
+void change_relay_switch_state(int switch_state)
+{
+    if (switch_state == RELAY_SWITCH_OFF) {
+        gpio_set_level(GPIO_OUTPUT_RELAY, MAINRELAY_GPIO_OFF);
+    } else {
+        gpio_set_level(GPIO_OUTPUT_RELAY, MAINRELAY_GPIO_ON);
     }
 }
 
@@ -81,9 +90,9 @@ void led_blink(int switch_state, int delay, int count)
 {
     for (int i = 0; i < count; i++) {
         vTaskDelay(delay / portTICK_PERIOD_MS);
-        change_switch_state(1 - switch_state);
+        change_led_switch_state(1 - switch_state);
         vTaskDelay(delay / portTICK_PERIOD_MS);
-        change_switch_state(switch_state);
+        change_led_switch_state(switch_state);
     }
 }
 
@@ -92,7 +101,7 @@ void change_led_mode(int noti_led_mode)
     static TimeOut_t led_timeout;
     static TickType_t led_tick = -1;
     static int last_led_mode = -1;
-    static int led_state = SWITCH_OFF;
+    static int led_state = LED_SWITCH_OFF;
 
     if (last_led_mode != noti_led_mode) {
         last_led_mode = noti_led_mode;
@@ -107,9 +116,9 @@ void change_led_mode(int noti_led_mode)
         case LED_ANIMATION_MODE_SLOW:
             if (xTaskCheckForTimeOut(&led_timeout, &led_tick ) != pdFALSE) {
                 led_state = 1 - led_state;
-                change_switch_state(led_state);
+                change_led_switch_state(led_state);
                 vTaskSetTimeOutState(&led_timeout);
-                if (led_state == SWITCH_ON) {
+                if (led_state == LED_SWITCH_ON) {
                     led_tick = pdMS_TO_TICKS(200);
                 } else {
                     led_tick = pdMS_TO_TICKS(800);
@@ -119,7 +128,7 @@ void change_led_mode(int noti_led_mode)
         case LED_ANIMATION_MODE_FAST:
             if (xTaskCheckForTimeOut(&led_timeout, &led_tick ) != pdFALSE) {
                 led_state = 1 - led_state;
-                change_switch_state(led_state);
+                change_led_switch_state(led_state);
                 vTaskSetTimeOutState(&led_timeout);
                 led_tick = pdMS_TO_TICKS(100);
             }
@@ -139,13 +148,14 @@ void iot_gpio_init(void)
 	io_conf.pull_down_en = 1;
 	io_conf.pull_up_en = 0;
 	gpio_config(&io_conf);
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED_0;
-	gpio_config(&io_conf);
 
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE1;
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+	io_conf.mode = GPIO_MODE_OUTPUT;
+	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_RELAY;
+    io_conf.pull_down_en = 1;
+	io_conf.pull_up_en = 0;
 	gpio_config(&io_conf);
-	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE2;
-	gpio_config(&io_conf);
+	
 
 
 	io_conf.intr_type = GPIO_INTR_ANYEDGE;
@@ -159,8 +169,8 @@ void iot_gpio_init(void)
 
 	gpio_install_isr_service(0);
 
-	gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
-	gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
+	gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_OFF);
+    gpio_set_level(GPIO_OUTPUT_RELAY, MAINRELAY_GPIO_OFF);
 }
 
 
