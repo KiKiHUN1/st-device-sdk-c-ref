@@ -69,9 +69,13 @@ static int get_online_switch_state(void)
 
 static void cap_switch_cmd_cb(struct caps_switch_data *caps_data)
 {
-    int switch_state = get_online_switch_state();
-    change_led_switch_state(switch_state);
-    change_relay_switch_state(switch_state);
+    if (get_online_switch_state() == LED_SWITCH_ON) {
+        change_led_switch_state(LED_SWITCH_ON);
+        change_relay_switch_state(RELAY_SWITCH_ON);
+    } else {
+        change_led_switch_state(LED_SWITCH_OFF);
+        change_relay_switch_state(RELAY_SWITCH_OFF);
+    }
 }
 
 static void capability_init()
@@ -138,9 +142,13 @@ static void iot_status_cb(iot_status_t status,
                 printf("connected");
                 noti_led_mode = LED_ANIMATION_MODE_IDLE;
                 change_led_mode(noti_led_mode);
-                int switch_state = get_online_switch_state();
-                change_led_switch_state(switch_state);
-                change_relay_switch_state(switch_state);
+                if (get_online_switch_state() == LED_SWITCH_ON) {
+                    change_led_switch_state(LED_SWITCH_ON);
+                    change_relay_switch_state(RELAY_SWITCH_ON);
+                } else {
+                    change_led_switch_state(LED_SWITCH_OFF);
+                    change_relay_switch_state(RELAY_SWITCH_OFF);
+                }
             }
                 
           

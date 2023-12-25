@@ -145,8 +145,8 @@ void iot_gpio_init(void)
 	io_conf.intr_type = GPIO_INTR_DISABLE;
 	io_conf.mode = GPIO_MODE_OUTPUT;
 	io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED;
-	io_conf.pull_down_en = 1;
-	io_conf.pull_up_en = 0;
+	io_conf.pull_down_en = 0;
+	io_conf.pull_up_en = 1;
 	gpio_config(&io_conf);
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -161,8 +161,8 @@ void iot_gpio_init(void)
 	io_conf.intr_type = GPIO_INTR_ANYEDGE;
 	io_conf.mode = GPIO_MODE_INPUT;
 	io_conf.pin_bit_mask = 1 << GPIO_INPUT_BUTTON;
-	io_conf.pull_down_en = (BUTTON_GPIO_RELEASED == 0);
-	io_conf.pull_up_en = (BUTTON_GPIO_RELEASED == 1);
+	io_conf.pull_down_en = 0/*(BUTTON_GPIO_RELEASED == 0)*/;
+	io_conf.pull_up_en = 0 /*(BUTTON_GPIO_RELEASED == 1)*/;
 	gpio_config(&io_conf);
 
 	gpio_set_intr_type(GPIO_INPUT_BUTTON, GPIO_INTR_ANYEDGE);

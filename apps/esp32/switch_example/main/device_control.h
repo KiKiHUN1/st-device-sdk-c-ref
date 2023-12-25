@@ -39,8 +39,8 @@
 #endif
 
 enum switch_led_onoff_state {
-    LED_SWITCH_OFF = 0,
-    LED_SWITCH_ON = 1,
+    LED_SWITCH_OFF = 1,
+    LED_SWITCH_ON = 0,
 };
 
 enum switch_relay_onoff_state {
@@ -49,8 +49,8 @@ enum switch_relay_onoff_state {
 };
 
 enum main_led_gpio_state {
-    MAINLED_GPIO_ON = 1,
-    MAINLED_GPIO_OFF = 0,
+    MAINLED_GPIO_ON = 0,
+    MAINLED_GPIO_OFF = 1,
 };
 
 enum main_relay_gpio_state {
